@@ -1,0 +1,78 @@
+{
+ "plates": [
+  "00125v",
+  "00149v",
+  "00153v",
+  "00154v",
+  "00163v",
+  "00270v",
+  "00398v",
+  "00564v",
+  "01167v",
+  "31421v"
+ ],
+ "bracket": [
+  {
+   "file": "1-25.jpg",
+   "seconds": 0.04,
+   "label": "1/25 s"
+  },
+  {
+   "file": "1-60.jpg",
+   "seconds": 0.016666666666666666,
+   "label": "1/60 s"
+  },
+  {
+   "file": "1-250.jpg",
+   "seconds": 0.004,
+   "label": "1/250 s"
+  },
+  {
+   "file": "1-1600.jpg",
+   "seconds": 0.000625,
+   "label": "1/1600 s"
+  },
+  {
+   "file": "1-5000.jpg",
+   "seconds": 0.0002,
+   "label": "1/5000 s"
+  },
+  {
+   "file": "1-10000.jpg",
+   "seconds": 0.0001,
+   "label": "1/10000 s"
+  }
+ ],
+ "objects": [
+  {
+   "id": "bear",
+   "home": "pool",
+   "x": 10,
+   "y": 210
+  },
+  {
+   "id": "octopus",
+   "home": "carrier",
+   "x": 90,
+   "y": -40
+  },
+  {
+   "id": "jet",
+   "home": "valley",
+   "x": 100,
+   "y": 60
+  },
+  {
+   "id": "rainbow",
+   "home": "island",
+   "x": -40,
+   "y": -20
+  }
+ ],
+ "scenes": [
+  "pool",
+  "carrier",
+  "valley",
+  "island"
+ ]
+}

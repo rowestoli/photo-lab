@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Photo lab · Rowe Stodolnic</title>
+    <meta name="description" content="Color plate alignment, HDR merging and Poisson blending, computed live in the browser." />
+    <meta name="theme-color" content="#121614" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="top">
+        <a class="back" href="https://rowestoli.netlify.app/work/photo-lab">Rowe Stodolnic</a>
+        <a href="https://github.com/rowestoli/photo-lab">Source</a>
+      </header>
+
+      <section class="intro">
+        <h1>Photo lab</h1>
+        <p class="lede">
+          Techniques from my computational photography course, rebuilt in TypeScript so they run in your browser
+          instead of a Python notebook. Every image below is computed on your machine as you change it.
+        </p>
+      </section>
+
+      <nav class="tabs" role="tablist" aria-label="Techniques">
+        <button role="tab" id="tab-plates" aria-controls="plates" aria-selected="true">Color plates</button>
+        <button role="tab" id="tab-hdr" aria-controls="hdr" aria-selected="false" tabindex="-1">HDR</button>
+        <button role="tab" id="tab-blend" aria-controls="blend" aria-selected="false" tabindex="-1">Blending</button>
+        <button role="tab" id="tab-gallery" aria-controls="gallery" aria-selected="false" tabindex="-1">Panoramas and motion</button>
+        <span class="tabs__bar" aria-hidden="true"></span>
+      </nav>
+
+      <!-- Color plates -->
+      <section class="panel" id="plates" role="tabpanel" aria-labelledby="tab-plates">
+        <div class="panel__head">
+          <h2>Color from 1910 glass plates</h2>
+          <p class="muted">
+            Sergei Prokudin-Gorskii photographed the Russian Empire three times in a row, through blue, green and red
+            filters, onto one glass plate. Stack the three negatives and the colors smear, because the camera and the
+            scene moved between exposures. The aligner finds each channel's shift with a coarse-to-fine search.
+          </p>
+        </div>
+        <div class="plates__pick" id="plate-pick" role="listbox" aria-label="Glass plates"></div>
+        <div class="split">
+          <figure class="compare" id="plate-compare" style="--pos: 50%">
+            <canvas class="compare__b"></canvas>
+            <canvas class="compare__a"></canvas>
+            <span class="compare__tag compare__tag--a">Stacked as scanned</span>
+            <span class="compare__tag compare__tag--b">Aligned</span>
+            <span class="compare__line" aria-hidden="true"></span>
+            <input class="compare__range" type="range" min="0" max="100" value="50" aria-label="Compare stacked and aligned" />
+            <span class="busy" hidden>Aligning</span>
+          </figure>
+          <aside class="side">
+            <div>
+              <span class="label">Match on</span>
+              <div class="seg" id="plate-metric">
+                <button aria-pressed="true" data-v="edges">Edges</button>
+                <button aria-pressed="false" data-v="brightness">Brightness</button>
+              </div>
+              <p class="hint" id="plate-hint"></p>
+            </div>
+            <dl class="stats" id="plate-stats"></dl>
+            <div>
+              <span class="label">Search, coarsest level first</span>
+              <table class="trace" id="plate-trace"></table>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- HDR -->
+      <section class="panel" id="hdr" role="tabpanel" aria-labelledby="tab-hdr" hidden>
+        <div class="panel__head">
+          <h2>HDR from a handheld bracket</h2>
+          <p class="muted">
+            I shot six exposures of a hallway on my phone, from 1/25 s to 1/10,000 s, without a tripod. No single frame
+            holds both the ceiling lights and the shadows. The lab lines the frames up, recovers the camera's response
+            curve, merges them into one radiance map and tone-maps it back down to a screen.
+          </p>
+        </div>
+        <div class="bracket" id="bracket"></div>
+        <div class="split">
+          <figure class="compare compare--view" id="hdr-compare" style="--pos: 50%">
+            <canvas class="compare__b"></canvas>
+            <canvas class="compare__a"></canvas>
+            <span class="compare__tag compare__tag--a" id="hdr-tag-a">Single exposure</span>
+            <span class="compare__tag compare__tag--b">Merged and tone-mapped</span>
+            <span class="compare__line" aria-hidden="true"></span>
+            <input class="compare__range" type="range" min="0" max="100" value="50" aria-label="Compare single exposure and HDR" />
+            <span class="busy">Merging six exposures</span>
+            <div class="legend" id="hdr-legend" hidden><span>Darker</span><i></i><span>Brighter</span></div>
+          </figure>
+          <aside class="side">
+            <div>
+              <span class="label">Show</span>
+              <div class="seg" id="hdr-view">
+                <button aria-pressed="true" data-v="compare">Compare</button>
+                <button aria-pressed="false" data-v="tone">Result</button>
+                <button aria-pressed="false" data-v="radiance">Radiance</button>
+              </div>
+            </div>
+            <div>
+              <span class="label">Tone mapping</span>
+              <div class="seg" id="hdr-op">
+                <button aria-pressed="true" data-v="local">Local</button>
+                <button aria-pressed="false" data-v="global">Global</button>
+              </div>
+              <p class="hint" id="hdr-op-hint"></p>
+            </div>
+            <div class="sliders" id="hdr-sliders"></div>
+            <dl class="stats" id="hdr-stats"></dl>
+          </aside>
+        </div>
+        <div class="curves">
+          <div>
+            <h3>Recovered response curve</h3>
+            <p class="muted small">
+              How the phone maps light to pixel values, solved per color channel from 200 sample pixels across
+              all six exposures (Debevec and Malik, 1997). The bumps most likely come from the phone's own processing,
+              which a camera in manual mode would not add.
+            </p>
+          </div>
+          <svg id="hdr-curve" viewBox="0 0 360 220" role="img" aria-label="Response curves for red, green and blue"></svg>
+        </div>
+      </section>
+
+      <!-- Blending -->
+      <section class="panel" id="blend" role="tabpanel" aria-labelledby="tab-blend" hidden>
+        <div class="panel__head">
+          <h2>Seamless blending</h2>
+          <p class="muted">
+            Pasting an object into a photo leaves a hard edge and the wrong lighting. Poisson blending keeps the
+            object's texture (its gradients) and lets the new background decide its colors, by solving a sparse linear
+            system over the masked pixels. Drag the object around; the system is solved again as you move it.
+          </p>
+        </div>
+        <div class="split">
+          <figure class="stage" id="blend-stage">
+            <canvas id="blend-canvas" tabindex="0" aria-label="Composite. Drag, or use arrow keys, to move the object."></canvas>
+          </figure>
+          <aside class="side">
+            <div>
+              <span class="label">Object</span>
+              <div class="chips" id="blend-object"></div>
+            </div>
+            <div>
+              <span class="label">Background</span>
+              <div class="chips" id="blend-scene"></div>
+            </div>
+            <div>
+              <span class="label">Method</span>
+              <div class="seg" id="blend-mode">
+                <button aria-pressed="false" data-v="paste">Paste</button>
+                <button aria-pressed="true" data-v="poisson">Poisson</button>
+                <button aria-pressed="false" data-v="mixed">Mixed</button>
+              </div>
+              <p class="hint" id="blend-hint"></p>
+            </div>
+            <dl class="stats" id="blend-stats"></dl>
+          </aside>
+        </div>
+      </section>
+
+      <!-- Gallery -->
+      <section class="panel" id="gallery" role="tabpanel" aria-labelledby="tab-gallery" hidden>
+        <div class="panel__head">
+          <h2>Panoramas and motion</h2>
+          <p class="muted">
+            These two projects lean on heavier machinery (SIFT features, GPU shaders), so they are shown as results from
+            the course pipeline rather than run live.
+          </p>
+        </div>
+        <article class="work">
+          <img src="/data/gallery/yosemite.jpg" alt="Panorama of Half Dome above Yosemite Valley, stitched from several photos" loading="lazy" />
+          <div class="work__text">
+            <h3>Stitched panorama</h3>
+            <p class="muted">
+              SIFT features matched between neighboring shots, a homography fitted with RANSAC to throw out bad matches,
+              then each photo warped into one frame. The wide shot below uses cylindrical projection instead, which
+              keeps the edges from stretching.
+            </p>
+          </div>
+          <img src="/data/gallery/yosemite-cylindrical.jpg" alt="The same valley as a cylindrical panorama with curved borders" loading="lazy" />
+        </article>
+        <article class="work work--pair">
+          <video src="/data/gallery/jellyfish.mp4" poster="/data/gallery/jellyfish-poster.jpg" muted loop playsinline controls preload="none"></video>
+          <div class="work__text">
+            <h3>Slow motion from optical flow</h3>
+            <p class="muted">
+              Pyramidal Lucas-Kanade estimates where every pixel moves between two frames. Warping both frames halfway
+              along that flow and blending them synthesizes the frame in between, which turns ordinary video into
+              smooth slow motion.
+            </p>
+            <div class="seg" id="damp-toggle">
+              <button aria-pressed="false" data-v="no-damp">Undamped</button>
+              <button aria-pressed="true" data-v="damp">Damped</button>
+            </div>
+            <img id="damp-img" src="/data/gallery/ducky-damp.jpg" alt="Image pyramids and the final flow field for a test scene, with damping" loading="lazy" />
+            <p class="muted small">
+              Adding damping to each Lucas-Kanade solve keeps the flow from blowing up in flat, textureless areas.
+            </p>
+          </div>
+        </article>
+      </section>
+
+      <footer class="foot small muted">
+        <p>
+          Built by <a href="https://rowestoli.netlify.app">Rowe Stodolnic</a>, from CSCI 1290 coursework at Brown.
+          Glass plates: Prokudin-Gorskii Collection, Library of Congress (public domain).
+          Blending images are the course's test set.
+        </p>
+      </footer>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
